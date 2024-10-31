@@ -1,3 +1,5 @@
+# Adjust the uri, user, and password variables for your Neo4j instance.
+# This tool will handle basic node operations for nodes with any label and properties.
 # Create a Node:
 # python neo4j_crud_tool.py create Person --props name=Alice age=30
 # Read Nodes:
