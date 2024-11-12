@@ -1,0 +1,141 @@
+Website Time Blocker
+Click to open code
+I've created a Python script that will block specified social media websites during times you set. Here's how to use it:
+The script must be run with administrator/root privileges since it modifies the system's hosts file
+You'll be prompted to enter:
+Start time (in 24-hour format, e.g., "09:00")
+End time (in 24-hour format, e.g., "17:00")
+The script will then block the specified websites during that time period
+Important notes:
+The script blocks major social media sites by default (YouTube, Facebook, Twitter, Instagram, TikTok)
+You can easily modify the blocked_sites list to add or remove websites
+The script works on Windows, Linux, and macOS
+It needs to be run as administrator/root because it modifies the system hosts file
+To run the script:
+bash
+
+Copy
+# On Windows (run Command Prompt as Administrator):
+python website_blocker.py
+
+# On Linux/Mac:
+sudo python3 website_blocker.py
+Would you like me to modify the list of blocked websites or add any additional features?
+Copy
+Retry
+
+
+Claude does not have the ability to run the code it generates yet.
+Claude can make mistakes.
+Please double-check responses.
+
+
+
+
+3.5 Sonnet (New)
+
+Website Time Blocker
+
+import time
+from datetime import datetime
+import platform
+import sys
+import os
+
+class WebsiteBlocker:
+    def __init__(self):
+        # Determine hosts file location based on OS
+        if platform.system() == 'Windows':
+            self.hosts_path = r"C:\Windows\System32\drivers\etc\hosts"
+        else:  # Linux/Mac
+            self.hosts_path = "/etc/hosts"
+        
+        # List of websites to block
+        self.blocked_sites = [
+            "www.youtube.com",
+            "youtube.com",
+            "www.facebook.com",
+            "facebook.com",
+            "www.twitter.com",
+            "twitter.com",
+            "www.instagram.com",
+            "instagram.com",
+            "www.tiktok.com",
+            "tiktok.com"
+        ]
+        
+        # Redirect to localhost
+        self.redirect = "127.0.0.1"
+
+    def check_permissions(self):
+        try:
+            with open(self.hosts_path, 'a') as _:
+                pass
+            return True
+        except PermissionError:
+            return False
+
+    def block_websites(self, start_time, end_time):
+        print(f"Website blocker activated. Blocking sites from {start_time} to {end_time}")
+        
+        while True:
+            current_time = datetime.now().strftime('%H:%M')
+            
+            # Check if current time is in the blocking period
+            if start_time <= current_time <= end_time:
+                print(f"Blocking period active: {current_time}")
+                self.update_hosts_file(True)
+            else:
+                print(f"Blocking period inactive: {current_time}")
+                self.update_hosts_file(False)
+                
+            # Check every minute
+            time.sleep(60)
+
+    def update_hosts_file(self, block):
+        with open(self.hosts_path, 'r+') as file:
+            content = file.readlines()
+            file.seek(0)
+            
+            for line in content:
+                if not any(site in line for site in self.blocked_sites):
+                    file.write(line)
+            
+            if block:
+                for website in self.blocked_sites:
+                    file.write(f"{self.redirect} {website}\n")
+            
+            file.truncate()
+
+def main():
+    # Check if running with admin/root privileges
+    if not os.geteuid() == 0:
+        print("This script requires administrator privileges to modify the hosts file.")
+        print("Please run the script as administrator/root.")
+        sys.exit(1)
+        
+    blocker = WebsiteBlocker()
+    
+    # Check file permissions
+    if not blocker.check_permissions():
+        print("Error: Cannot access hosts file. Please run with administrator privileges.")
+        sys.exit(1)
+    
+    # Get blocking period from user
+    try:
+        start_time = input("Enter start time (24-hour format, e.g., 09:00): ")
+        end_time = input("Enter end time (24-hour format, e.g., 17:00): ")
+        
+        # Validate time format
+        datetime.strptime(start_time, '%H:%M')
+        datetime.strptime(end_time, '%H:%M')
+        
+        blocker.block_websites(start_time, end_time)
+        
+    except ValueError:
+        print("Invalid time format. Please use HH:MM format (e.g., 09:00)")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+    
