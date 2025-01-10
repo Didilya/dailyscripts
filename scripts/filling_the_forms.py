@@ -1,10 +1,13 @@
+# Before running the script do not forget:
+# pip install selenium pandas
+# install driver, for example https://sites.google.com/chromium.org/driver/
+# and specify driver path for variable "driver_path" below
+
 import csv
 import time
 from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
 
