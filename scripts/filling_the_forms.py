@@ -1,16 +1,17 @@
 import csv
+import time
 from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 
 
 def get_input_data():
     print("Enter the fields you want to include in the form. Press Enter without typing to finish adding fields.")
 
-    fields = []
+    fields, data = [], []
     while True:
         # Prompt the user for the field name
         field = input("Enter the name of the field: ").strip()
@@ -18,35 +19,26 @@ def get_input_data():
             break
         fields.append(field)
 
-    if not fields:
-        print("No fields were provided. Exiting.")
-        return
-
     print("\nEnter the data for each field. Leave a blank value to finish data entry for that field.")
 
-    data = []
-    while True:
-        entry = {}
-        print("\nEnter values for a new entry (press Enter without typing to finish):")
-        for field in fields:
-            value = input(f"{field}: ").strip()
-            if not value:  # Stop if input is empty
-                break
-            entry[field] = value
-
-        if not entry:  # Stop when no values are entered for a row
+    entry = {}
+    print("\nEnter values for a new entry (press Enter without typing to finish):")
+    for field in fields:
+        value = input(f"{field}: ").strip()
+        if not value:  # Stop if input is empty
             break
-        data.append(entry)
+        entry[field] = value
 
-    if not data:
-        print("No data entries were provided. Exiting.")
-        return
+    data.append(entry)
+
     return fields, data
 
 
 def create_csv(csv_file):
     fields, data = get_input_data()
-    # Write the collected data to a CSV file
+    if not fields or not data:
+        print("No data were provided. Exiting.")
+        return
     with open(csv_file, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.DictWriter(file, fieldnames=fields)
         writer.writeheader()
@@ -61,7 +53,6 @@ def load_data_csv(csv_file):
         return [row for row in reader]
 
 
-# Fill out a form
 def fill_form(data, driver, fields):
     for entry in data:
         try:
@@ -71,16 +62,17 @@ def fill_form(data, driver, fields):
             # Fill the form fields dynamically based on provided field names
             for field in fields:
                 field_id = field.lower().replace(" ", "_")  # Assume IDs are in snake_case
-                driver.find_element(By.ID, field_id).send_keys(entry[field])
+                try:
+                    driver.find_element(By.CSS_SELECTOR, f'input[data-input={field_id}]').send_keys(entry[field])
+                except NoSuchElementException:
+                    print(f"couldn't find {field_id} on page..continue..")
+                    continue
 
-            # Submit the form (example for a button with ID "submit")
-            driver.find_element(By.ID, "submit").click()
+            submit = input("Do you want to submit?): ").strip().lower()
+            if submit in ['yes', 'y']:
+                driver.find_element(By.ID, "submit").click()
+                print(f"Form submitted for {entry[fields[0]]}")
 
-            # Wait for a success message or redirection
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, "success-message"))
-            )
-            print(f"Form submitted for {entry[fields[0]]}")
         except Exception as e:
             print(f"Failed to submit form for {entry[fields[0]]}: {e}")
 
@@ -109,7 +101,10 @@ def main():
 
     try:
         fill_form(data, driver, fields)
+    except Exception as e:
+        print(f"Exception {str(e)}")
     finally:
+        time.sleep(20)
         driver.quit()
 
 
